@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import boto3
 from botocore.client import Config
 import argparse
@@ -82,6 +83,20 @@ class S3Manager:
         except Exception as e:
             print(f"❌ Failed to download file:\n{e}")
 
+    def upload_file(self, local_path: str, s3_path: str):
+        if not self.s3_bucket:
+            print("⚠️ No bucket selected.")
+            return
+        if not os.path.isfile(local_path):
+            print(f"❌ Local file '{local_path}' does not exist.")
+            return
+        try:
+            s3_key = s3_path.lstrip("/")
+            self.s3_client.upload_file(local_path, self.s3_bucket, s3_key)
+            print(f"✅ File '{local_path}' uploaded to '{self.s3_bucket}/{s3_key}'")
+        except Exception as e:
+            print(f"❌ Failed to upload file:\n{e}")
+
 
 def main():
     parser = argparse.ArgumentParser(description="S3 Cloudian Interactive Console")
@@ -109,7 +124,8 @@ def main():
         print("3. Set bucket name for action")
         print("4. List contents of current bucket")
         print("5. Download file from bucket")
-        print("6. Exit")
+        print("6. Upload file to bucket")
+        print("7. Exit")
         choice = input("Choose an option: ")
 
         if choice == '1':
@@ -129,6 +145,10 @@ def main():
             local = input("Enter local path to save the file: ").strip()
             s3.download_file(key, local)
         elif choice == '6':
+            local_path = input("Enter local file path to upload: ").strip()
+            s3_path = input("Enter target path in bucket (e.g. /folder/file.txt): ").strip()
+            s3.upload_file(local_path, s3_path)
+        elif choice == '7':
             print("👋 Exiting.")
             break
         else:
